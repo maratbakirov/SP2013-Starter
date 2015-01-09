@@ -13,7 +13,9 @@
     <TargetOfficeVersion>15.0</TargetOfficeVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{C1CDDADD-2546-481F-9697-4EA41081F2FC};{14822709-B5A1-4724-98CA-57A101D1B079};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
-    <SandboxedSolution>False</SandboxedSolution>
+    <SandboxedSolution>True</SandboxedSolution>
+    <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
+    <RestorePackages>true</RestorePackages>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -68,6 +70,7 @@
     <None Include="Modules\WebParts\SharePointProjectItem.spdata">
       <SharePointProjectItemId>{934759a7-889a-4988-a904-e87770850867}</SharePointProjectItemId>
     </None>
+    <None Include="packages.config" />
     <None Include="Package\Package.package">
       <PackageId>{b09c4b8f-c970-437a-882c-32c2305de9fd}</PackageId>
     </None>
@@ -81,7 +84,9 @@
       <DependentUpon>Assets.feature</DependentUpon>
     </Content>
     <Content Include="Modules\Assets\AL.SP\css\styles.css" />
+    <TypeScriptCompile Include="Modules\Assets\AL.SP\js\app.ts" />
     <Content Include="Modules\Assets\AL.SP\js\app.js" />
+    <Content Include="Modules\Assets\AL.SP\js\app_1.js" />
     <Content Include="Modules\Assets\AL.SP\js\jquery-1.11.0.min.js" />
     <Content Include="Modules\Assets\AL.SP\js\knockout-3.0.0.js" />
     <Content Include="Modules\Assets\AL.SP\js\searchbox.js" />
@@ -89,9 +94,14 @@
     <Content Include="Modules\Assets\AL.SP\parts\Members.html" />
     <Content Include="Modules\Assets\Elements.xml" />
     <Content Include="Modules\WebParts\Elements.xml" />
+    <TypeScriptCompile Include="Scripts\typings\jquery\jquery.d.ts" />
+    <TypeScriptCompile Include="Scripts\typings\knockout\knockout.d.ts" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Modules\Assets\AL.SP\img\" />
+  </ItemGroup>
+  <ItemGroup>
+    <TypeScriptCompile Include="Scripts\typings\sharepoint\SharePoint.d.ts" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
@@ -99,4 +109,11 @@
     <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
   </PropertyGroup>
   <Import Project="$(VSToolsPath)\SharePointTools\Microsoft.VisualStudio.SharePoint.targets" Condition="'$(VSToolsPath)' != ''" />
+  <Import Project="$(SolutionDir)\.nuget\NuGet.targets" Condition="Exists('$(SolutionDir)\.nuget\NuGet.targets')" />
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Enable NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('$(SolutionDir)\.nuget\NuGet.targets')" Text="$([System.String]::Format('$(ErrorText)', '$(SolutionDir)\.nuget\NuGet.targets'))" />
+  </Target>
 </Project>

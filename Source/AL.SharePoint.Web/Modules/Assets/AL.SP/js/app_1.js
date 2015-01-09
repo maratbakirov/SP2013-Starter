@@ -1,23 +1,20 @@
-/// <reference path="../../../../Scripts/typings/sharepoint/SharePoint.d.ts" />
-/// <reference path="../../../../Scripts/typings/jquery/jquery.d.ts" />
-/// <reference path="../../../../Scripts/typings/knockout/knockout.d.ts" />
-// http://stackoverflow.com/questions/16204142/how-do-i-define-a-knockout-binding-handler-in-typescript
-//Page Load
+﻿//Page Load
 var $j = jQuery.noConflict();
-/****************/
+
 $j(document).ready(function () {
     //Search box drop down
     _spBodyOnLoadFunctionNames.push("overrideSearchBox");
 });
+
 //Variables
 var rev = '?Rev=1.01';
+
 var webParts = {
-    partPath: function () {
-        return _spPageContextInfo.siteServerRelativeUrl.replace(/\/$/, "") + '/_catalogs/masterpage/al.sp/parts/';
-    },
+    partPath: function () { return _spPageContextInfo.siteServerRelativeUrl.replace(/\/$/, "") + '/_catalogs/masterpage/al.sp/parts/' },
     showMembers: 'Members.html',
     editMembers: 'EditMembers.html'
 };
+
 //Handlers
 ko.bindingHandlers.renderUser = {
     propertyNames: ["PreferredName", "PictureURL", "AccountName", "Title", "WorkEmail", "SipAddress"],
@@ -30,14 +27,15 @@ ko.bindingHandlers.renderUser = {
         var userName = value;
         if (value.userName)
             userName = value.userName;
+
         var ru = ko.bindingHandlers.renderUser;
         if (ru.context == null) {
-            var clientContext = SP.ClientContext.get_current();
-            ru.context = clientContext;
+            ru.context = clientContext = SP.ClientContext.get_current();
             ru.peopleManager = new SP.UserProfiles.PeopleManager(ru.context);
         }
         if (ru.callbacks == null)
             ru.callbacks = new Array();
+
         var userProfilePropertiesForUser = new SP.UserProfiles.UserProfilePropertiesForUser(ru.context, userName, ru.propertyNames);
         var userProfileProperties = ru.peopleManager.getUserProfilePropertiesFor(userProfilePropertiesForUser);
         clientContext.load(userProfilePropertiesForUser);
@@ -67,27 +65,22 @@ ko.bindingHandlers.renderUser = {
         }, 1);
     },
     renderPresence: function (user, fieldSchemaOverride) {
-        // ??
-        var renderCtx = (new ContextInfo());
-        //var renderCtx = <SPClientTemplates.RenderContext>(GetCurrentCtx());
+        var renderCtx = new ContextInfo();
         renderCtx.Templates = {};
         renderCtx.Templates["Fields"] = {};
+
         var fieldSchemaData = fieldSchemaOverride;
         if (!fieldSchemaData)
             fieldSchemaData = { "WithPictureDetail": "1", "PictureSize": "Size_36px" };
         var listSchema = { "EffectivePresenceEnabled": "1", "PresenceAlt": "User Presence" };
         var userData = {
-            "id": user.AccountName,
-            "department": user.Role,
-            "jobTitle": user.Title,
-            "title": user.PreferredName,
-            "email": user.WorkEmail,
-            "picture": user.PictureURL,
-            "sip": user.SipAddress
+            "id": user.AccountName, "department": user.Role, "jobTitle": user.Title,
+            "title": user.PreferredName, "email": user.WorkEmail, "picture": user.PictureURL, "sip": user.SipAddress
         };
         return RenderUserFieldWorker(renderCtx, fieldSchemaData, userData, listSchema);
     }
 };
+
 ko.bindingHandlers.clientPeoplePicker = {
     currentId: 0,
     init: function (element, valueAccessor) {
@@ -95,6 +88,7 @@ ko.bindingHandlers.clientPeoplePicker = {
         if (!ko.isObservable(obs)) {
             throw "clientPeoplePicker binding requires an observable";
         }
+
         var currentId = ko.bindingHandlers.clientPeoplePicker.currentId++;
         var currentElemId = "ClientPeoplePicker" + currentId;
         element.setAttribute("id", currentElemId);
@@ -117,6 +111,7 @@ ko.bindingHandlers.clientPeoplePicker = {
         }
         if (typeof SPClientPeoplePicker === 'undefined')
             return;
+
         var peoplePicker = SPClientPeoplePicker.SPClientPeoplePickerDict[obs._peoplePickerId];
         if (peoplePicker) {
             var keys = peoplePicker.GetAllUserKeys();
@@ -124,12 +119,12 @@ ko.bindingHandlers.clientPeoplePicker = {
             var updateKeys = obs() && obs().length ? obs() : [];
             var newKeys = new Array();
             for (var x = 0; x < updateKeys.length; x++) {
-                for (var y = 0; y < keys.length && updateKeys[x] != keys[y]; y++) {
-                }
+                for (var y = 0; y < keys.length && updateKeys[x] != keys[y]; y++) { }
                 if (y >= keys.length) {
                     newKeys[newKeys.length] = updateKeys[x];
                 }
             }
+
             if (newKeys.length > 0) {
                 peoplePicker.AddUserKeys(newKeys.join(";"));
             }
@@ -143,25 +138,31 @@ ko.bindingHandlers.clientPeoplePicker = {
         schema['AllowMultipleValues'] = true;
         schema['MaximumEntitySuggestions'] = 50;
         //schema['Width'] = '280px'; //use default width
+
         var dfd = $j.Deferred();
+
         SPSODAction(["sp.js", "clienttemplates.js", "clientforms.js", "clientpeoplepicker.js", "autofill.js"], function () {
             SPClientPeoplePicker_InitStandaloneControlWrapper(elementId, null, schema);
             dfd.resolve(SPClientPeoplePicker.SPClientPeoplePickerDict[elementId + "_TopSpan"]);
         });
+
         return dfd.promise();
     }
 };
+
 ko.bindingHandlers.webPartId = {
     init: function (element, valueAccessor) {
         var obs = valueAccessor();
         if (!ko.isObservable(obs)) {
             throw "webPartId binding requires an observable";
         }
+
         $j(element).parents("[webpartid]").each(function () {
             obs($j(this).attr("webpartid"));
         });
     }
 };
+
 ko.bindingHandlers.submitOnEnter = {
     init: function (element, valueAccessor, allBindingsAccessor, viewModel) {
         var allBindings = allBindingsAccessor();
@@ -174,22 +175,26 @@ ko.bindingHandlers.submitOnEnter = {
             return true;
         });
     },
-    update: function () {
-    }
+    update: function () { }
 };
+
 ko.bindingHandlers.starRating = {
     init: function (element, valueAccessor) {
         $j(element).addClass("doc-rating");
         for (var i = 0; i < 5; i++)
             $j("<span>").appendTo(element);
+
         $j("span", element).each(function (index) {
-            $j(this).hover(function () {
-                $j(this).prevAll().add(this).addClass("hoverChosen");
-                $j(this).nextAll().addClass("hoverCleared");
-            }, function () {
-                $j(this).prevAll().add(this).removeClass("hoverChosen");
-                $j(this).nextAll().removeClass("hoverCleared");
-            }).click(function () {
+            $j(this).hover(
+                function () {
+                    $j(this).prevAll().add(this).addClass("hoverChosen");
+                    $j(this).nextAll().addClass("hoverCleared");
+                },
+                function () {
+                    $j(this).prevAll().add(this).removeClass("hoverChosen");
+                    $j(this).nextAll().removeClass("hoverCleared");
+                }
+            ).click(function () {
                 var observable = valueAccessor();
                 observable(index + 1);
             });
@@ -202,17 +207,16 @@ ko.bindingHandlers.starRating = {
         $j("span", element).each(function (index) {
             if (index < stars) {
                 $j(this).toggleClass("chosen", true);
-            }
-            else if (decRating > 0) {
+            } else if (decRating > 0) {
                 $j(this).toggleClass("halfChosen", decRating >= 0.25 && decRating <= 0.75);
                 $j(this).toggleClass("chosen", decRating > 0.75);
                 decRating = 0;
-            }
-            else
+            } else
                 $j(this).toggleClass("chosen", false);
         });
     }
 };
+
 //ViewModels
 function PeoplePickerMembersViewModel(initUsers) {
     var self = this;
@@ -220,14 +224,17 @@ function PeoplePickerMembersViewModel(initUsers) {
     self.error = ko.observable("");
     self.success = ko.observable("");
     self.userNames = ko.observableArray();
+
     self.saveUsers = function () {
         saveToScriptEditor(self.webPartId(), self.userNames()).done(function () {
             self.success("Save successful");
         }).fail(self.error);
     };
+
     if (initUsers)
         self.userNames(initUsers);
 }
+
 function SearchRatingViewModel(avgRating, siteUrl, listId, listItemId) {
     var self = this;
     self.rating = ko.observable(avgRating);
@@ -237,6 +244,7 @@ function SearchRatingViewModel(avgRating, siteUrl, listId, listItemId) {
     self.rating.subscribe(function () {
         self.updateRating();
     });
+
     self.updateRating = function () {
         SPSODAction(['reputation.js'], function () {
             var spCtx = new SP.ClientContext(self.site);
@@ -249,13 +257,16 @@ function SearchRatingViewModel(avgRating, siteUrl, listId, listItemId) {
         });
     };
 }
+
 //Functions
 function getWebPartProperties(wpId) {
     var dfd = $j.Deferred();
+
     var clientContext = new SP.ClientContext(_spPageContextInfo.webServerRelativeUrl);
     var oFile = clientContext.get_web().getFileByServerRelativeUrl(_spPageContextInfo.serverRequestPath);
     var limitedWebPartManager = oFile.getLimitedWebPartManager(SP.WebParts.PersonalizationScope.shared);
     var collWebPart = limitedWebPartManager.get_webParts();
+
     clientContext.load(collWebPart);
     clientContext.executeQueryAsync(Function.createDelegate(this, function () {
         var webPartDef = null;
@@ -269,20 +280,20 @@ function getWebPartProperties(wpId) {
             dfd.reject("Web Part: " + wpId + " not found on page: " + _spPageContextInfo.webServerRelativeUrl);
             return;
         }
+
         var webPartProperties = webPartDef.get_webPart().get_properties();
         clientContext.load(webPartProperties);
         clientContext.executeQueryAsync(Function.createDelegate(this, function () {
             dfd.resolve(webPartProperties, webPartDef, clientContext);
-        }), Function.createDelegate(this, function () {
-            dfd.reject("Failed to load web part properties");
-        }));
-    }), Function.createDelegate(this, function () {
-        dfd.reject("Failed to load web part collection");
-    }));
+        }), Function.createDelegate(this, function () { dfd.reject("Failed to load web part properties"); }));
+    }), Function.createDelegate(this, function () { dfd.reject("Failed to load web part collection"); }));
+
     return dfd.promise();
 }
+
 function saveWebPartProperties(wpId, obj) {
     var dfd = $j.Deferred();
+
     getWebPartProperties(wpId).done(function (webPartProperties, webPartDef, clientContext) {
         for (var key in obj) {
             webPartProperties.set_item(key, obj[key]);
@@ -290,16 +301,15 @@ function saveWebPartProperties(wpId, obj) {
         webPartDef.saveWebPartChanges();
         clientContext.executeQueryAsync(Function.createDelegate(this, function () {
             dfd.resolve();
-        }), Function.createDelegate(this, function () {
-            dfd.reject("Failed to save web part properties");
-        }));
-    }).fail(function (err) {
-        dfd.reject(err);
-    });
+        }), Function.createDelegate(this, function () { dfd.reject("Failed to save web part properties"); }));
+    }).fail(function (err) { dfd.reject(err); });
+
     return dfd.promise();
 }
+
 function saveToScriptEditor(wpId, obj) {
     var dfd = $j.Deferred();
+
     getWebPartProperties(wpId).done(function (wpProps) {
         var content = wpProps.get_item("Content");
         var match = /var options\s*=\s*([^;]*?);/.exec(content);
@@ -307,27 +317,31 @@ function saveToScriptEditor(wpId, obj) {
             dfd.reject("unable to update options variable in web part: " + wpId);
             return;
         }
+            
         content = content.replace(match[0], match[0].replace(match[1], JSON.stringify(obj)));
         saveWebPartProperties(wpId, { Content: content }).done(function () {
-            dfd.resolve();
+            dfd.resolve()
         }).fail(dfd.reject);
     }).fail(dfd.reject);
+
     return dfd.promise();
 }
+
 function loadSPData(url, completeFunction) {
     $j.ajax({
-        url: url,
-        method: "GET",
+        url: url, method: "GET",
         headers: { "accept": "application/json;odata=verbose" }
     }).success(function (data) {
         completeFunction(data);
     });
 }
+
 function loadWebPart(partId, contentFile, complete) {
     $j('#' + partId).load(contentFile + rev, function () {
         complete();
     });
 }
+
 function createKnockoutWebPart(elementId, wpName, viewModel) {
     SPSODAction(["sp.js"], function () {
         var prefix = "show";
@@ -340,6 +354,7 @@ function createKnockoutWebPart(elementId, wpName, viewModel) {
         });
     });
 }
+
 function loadWebPartData(partId, contentFile, getUrl, complete) {
     $j(document).ready(function () {
         $j('#' + partId).load(contentFile + rev, function () {
@@ -349,6 +364,7 @@ function loadWebPartData(partId, contentFile, getUrl, complete) {
         });
     });
 }
+
 function loadTaxonomy(termSetId, collection) {
     var context = SP.ClientContext.get_current();
     var taxonomySession = SP.Taxonomy.TaxonomySession.getTaxonomySession(context);
@@ -357,21 +373,25 @@ function loadTaxonomy(termSetId, collection) {
     var terms = termSet.get_terms();
     recurseTerms(context, terms, collection);
 }
+
 function recurseTerms(context, rootTerms, parentCollection) {
     context.load(rootTerms);
-    context.executeQueryAsync(function () {
-        var termsEnum = rootTerms.getEnumerator();
-        while (termsEnum.moveNext()) {
-            var currentTerm = termsEnum.get_current();
-            var term = { title: currentTerm.get_name(), id: currentTerm.get_id(), subTerms: [] };
-            parentCollection.push(term);
-            if (currentTerm.get_termsCount() > 0) {
-                recurseTerms(context, currentTerm.get_terms(), term.subTerms);
+    context.executeQueryAsync(
+        function () {
+            var termsEnum = rootTerms.getEnumerator();
+            while (termsEnum.moveNext()) {
+                var currentTerm = termsEnum.get_current();
+                var term = { title: currentTerm.get_name(), id: currentTerm.get_id(), subTerms : [] };
+                parentCollection.push(term);
+
+                if (currentTerm.get_termsCount() > 0) {
+                    recurseTerms(context, currentTerm.get_terms(), term.subTerms);
+                }
             }
-        }
-    }, function () {
-    });
+        },
+        function () { });
 }
+
 function formatSearchResults(data) {
     var returnData = [];
     var query = data.d.query;
@@ -386,6 +406,7 @@ function formatSearchResults(data) {
     }
     return returnData;
 }
+
 function SPSODAction(sodScripts, onLoadAction) {
     if (SP.SOD.loadMultiple) {
         for (var x = 0; x < sodScripts.length; x++) {
@@ -394,20 +415,22 @@ function SPSODAction(sodScripts, onLoadAction) {
             }
         }
         SP.SOD.loadMultiple(sodScripts, onLoadAction);
-    }
-    else
+    } else
         ExecuteOrDelayUntilScriptLoaded(onLoadAction, sodScripts[0]);
 }
+
 function parseDate(jsonDate) {
     var d = new Date(parseInt(jsonDate.substr(6)));
     return d.getMonth() + "/" + d.getDate() + "/" + d.getFullYear();
 }
+
 function getParameterByName(name, url) {
-    if (!url)
-        url = window.location.href;
+    if (!url) url = window.location.href;
+
     var match = RegExp('[?&]' + name + '=([^&#]*)').exec(url);
     return match && match[1].replace(/\+/g, ' ');
 }
+
 function pageInEditMode() {
     var inEditMode = null;
     if (document.forms[MSOWebPartPageFormName].MSOLayout_InDesignMode) {
@@ -419,8 +442,10 @@ function pageInEditMode() {
     }
     if (!inEditMode && !wikiInEditMode)
         return false;
+
     return inEditMode == "1" || wikiInEditMode == "Edit";
 }
+
 function overrideSearchBox() {
     $j("input.ms-srch-sb-prompt").click(function (event) {
         var nodes = $j("div.ms-qSuggest-listItem");
@@ -436,9 +461,10 @@ function overrideSearchBox() {
         $j("#NavDropdownListContainer").css({ display: "none", visibility: "visible" });
     });
 }
+
 function loadMembersWebPart(initUsers) {
-    var partId = "ElementKOPeoplePicker" + curId++;
+    var partId = "ElementKOPeoplePicker" + loadMembersWebPart.curId++;
     document.write("<div id='" + partId + "'></div>");
     createKnockoutWebPart(partId, "Members", new PeoplePickerMembersViewModel(initUsers));
 }
-var curId = 0;
+loadMembersWebPart.curId = 0;
